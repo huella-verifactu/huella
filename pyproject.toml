@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.7",
     # zoneinfo needs an IANA database; Windows and slim containers have none.
+    "segno>=1.6",
     "tzdata>=2024.1",
 ]
 keywords = ["verifactu", "aeat", "facturacion", "huella", "invoice", "spain"]
