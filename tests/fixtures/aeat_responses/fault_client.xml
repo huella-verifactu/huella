@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SOAP fault modelled on the example in Veri-Factu_Descripcion_SWeb.pdf; not recorded traffic. -->
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Body>
+    <env:Fault>
+      <faultcode>env:Client</faultcode>
+      <faultstring>Codigo[4104].El NIF del titular en la cabecera no está identificado. NIF:B12345674. NOMBRE_RAZON:TIENDA EJEMPLO SL</faultstring>
+      <detail>
+        <callstack>WSExcepcion [faultcode=null, detailMap=null, version=0]</callstack>
+      </detail>
+    </env:Fault>
+  </env:Body>
+</env:Envelope>
