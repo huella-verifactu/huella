@@ -23,6 +23,8 @@ may change in any minor release.
 - `huella.errors`: `HuellaError`, `SchemaError`, `TransportError`, `CertificateError`, `AeatFault`.
 - `huella.aeat`: endpoints from the WSDL, `client_ssl_context()` for mutual TLS, `AeatClient.send()`
   and `parse_response()` (per-record status, error codes, duplicates, CSV, `TiempoEsperaEnvio`).
+- Development CLI `huella hash | xml | send` over a batch JSON file (`examples/batch.json`);
+  `.p12`/`.pfx` support via the `cli` extra; production sends need `--yes-production`.
 
 ## [0.0.1] - 2026-10-15
 

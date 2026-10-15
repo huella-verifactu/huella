@@ -428,6 +428,11 @@ dependencies = [
     { name = "tzdata" },
 ]
 
+[package.optional-dependencies]
+cli = [
+    { name = "cryptography" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "cryptography" },
@@ -442,12 +447,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", marker = "extra == 'cli'", specifier = ">=43" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "lxml", specifier = ">=5.2" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "segno", specifier = ">=1.6" },
     { name = "tzdata", specifier = ">=2024.1" },
 ]
+provides-extras = ["cli"]
 
 [package.metadata.requires-dev]
 dev = [
