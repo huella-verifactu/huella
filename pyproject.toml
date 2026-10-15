@@ -1,6 +1,6 @@
 [project]
 name = "huella"
-version = "0.0.1"
+version = "0.1.0"
 description = "Open-source Verifactu core: record formatting, huella (SHA-256 chain hash), XML, QR and AEAT client."
 readme = "README.md"
 license = "Apache-2.0"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 keywords = ["verifactu", "aeat", "facturacion", "huella", "invoice", "spain"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Natural Language :: Spanish",
     "Programming Language :: Python :: 3.12",
