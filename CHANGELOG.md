@@ -17,6 +17,10 @@ may change in any minor release.
 - `huella.qr`: the AEAT validation URL (RFC 3986 encoding, shared fixture with the plugin) and
   PNG/SVG images with error correction M, 30-40 mm and a 4-module quiet zone.
 - `Environment` (test / production).
+- `huella.xml`: `registro_alta()`, `registro_anulacion()` and `envelope()` build the AEAT XML in
+  XSD order and validate it against the bundled official XSD before returning (offline). Stored
+  records are re-parsed without DTDs, entities or network access.
+- `huella.errors`: `HuellaError`, `SchemaError`.
 
 ## [0.0.1] - 2026-10-15
 
