@@ -14,6 +14,9 @@ may change in any minor release.
   block, enforcing the AEAT validations in scope (invoice number characters, dates, VAT rates,
   per-line tax within one cent, totals, recipients, corrective invoices, correction flags).
 - `hash_record()`: the huella of a validated record.
+- `huella.qr`: the AEAT validation URL (RFC 3986 encoding, shared fixture with the plugin) and
+  PNG/SVG images with error correction M, 30-40 mm and a 4-module quiet zone.
+- `Environment` (test / production).
 
 ## [0.0.1] - 2026-10-15
 

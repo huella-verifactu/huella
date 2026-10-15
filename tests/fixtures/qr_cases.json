@@ -1,0 +1,50 @@
+{
+  "_comment": "Shared by core (tests/test_qr.py) and the WooCommerce plugin (Qr.php tests): both must build these exact URLs (SPEC 3.7, D7). Values are percent-encoded per RFC 3986 (Python quote(safe=''), PHP rawurlencode). Synthetic data and the AEAT's own example only.",
+  "cases": [
+    {
+      "name": "AEAT QR spec section 4 example (ampersand in the number), with our 2-decimal amount",
+      "nif": "89890001K",
+      "number": "12345678&G33",
+      "issue_date": "2024-01-01",
+      "total": "241.40",
+      "environment": "test",
+      "url": "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR?nif=89890001K&numserie=12345678%26G33&fecha=01-01-2024&importe=241.40"
+    },
+    {
+      "name": "slash in the number",
+      "nif": "B12345674",
+      "number": "2026/000123",
+      "issue_date": "2026-01-20",
+      "total": "100.00",
+      "environment": "test",
+      "url": "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR?nif=B12345674&numserie=2026%2F000123&fecha=20-01-2026&importe=100.00"
+    },
+    {
+      "name": "production host",
+      "nif": "B12345674",
+      "number": "2026-000123",
+      "issue_date": "2026-01-20",
+      "total": "100.00",
+      "environment": "production",
+      "url": "https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif=B12345674&numserie=2026-000123&fecha=20-01-2026&importe=100.00"
+    },
+    {
+      "name": "space, plus, hash and tilde",
+      "nif": "X1234567L",
+      "number": "FAC 2026+1#A~B",
+      "issue_date": "2026-02-28",
+      "total": "0.50",
+      "environment": "test",
+      "url": "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR?nif=X1234567L&numserie=FAC%202026%2B1%23A~B&fecha=28-02-2026&importe=0.50"
+    },
+    {
+      "name": "negative total of a corrective invoice",
+      "nif": "B12345674",
+      "number": "R-2026-7",
+      "issue_date": "2026-03-01",
+      "total": "-50.00",
+      "environment": "test",
+      "url": "https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR?nif=B12345674&numserie=R-2026-7&fecha=01-03-2026&importe=-50.00"
+    }
+  ]
+}

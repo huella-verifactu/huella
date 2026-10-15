@@ -60,7 +60,8 @@ def _exact_cents(value: Decimal) -> Decimal:
     return value
 
 
-def _check_invoice_number(value: str) -> str:
+def check_invoice_number(value: str) -> str:
+    """Return ``value`` if the AEAT accepts it as ``NumSerieFactura``, else raise ``ValueError``."""
     if not 1 <= len(value) <= 60:
         raise ValueError("must be 1 to 60 characters")
     if value != value.strip():
@@ -81,13 +82,20 @@ def _check_alta_date(value: date) -> date:
 
 Money = Annotated[Decimal, BeforeValidator(_reject_float), AfterValidator(_exact_cents)]
 Nif = Annotated[str, AfterValidator(validate_nif)]
-InvoiceNumber = Annotated[str, AfterValidator(_check_invoice_number)]
+InvoiceNumber = Annotated[str, AfterValidator(check_invoice_number)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 Huella = Annotated[str, StringConstraints(pattern=r"^[0-9A-F]{64}$")]
 InvoiceType = Literal["F1", "F2", "R1", "R4", "R5"]
 
 WITH_RECIPIENT: frozenset[str] = frozenset({"F1", "R1", "R4"})
 CORRECTIVE: frozenset[str] = frozenset({"R1", "R4", "R5"})
+
+
+class Environment(StrEnum):
+    """AEAT environment. Test and production are separate systems, each with its own chain."""
+
+    TEST = "test"  # AEAT pre-production (Portal de Pruebas Externas)
+    PRODUCTION = "production"
 
 
 class _Model(BaseModel):

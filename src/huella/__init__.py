@@ -7,6 +7,7 @@ from huella.hash import hash_record, huella_alta, huella_anulacion
 from huella.models import (
     ChainLink,
     Correction,
+    Environment,
     InvoiceAlta,
     InvoiceAnulacion,
     Recipient,
@@ -21,6 +22,7 @@ __version__ = version("huella")  # single source of truth: pyproject.toml
 __all__ = [
     "ChainLink",
     "Correction",
+    "Environment",
     "InvoiceAlta",
     "InvoiceAnulacion",
     "Recipient",
