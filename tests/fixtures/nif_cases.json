@@ -1,0 +1,39 @@
+{
+  "_comment": "Shared by core (tests/test_nif.py) and the WooCommerce plugin (Nif.php tests). All values are synthetic or the AEAT's documented example NIF 89890001K. Never add a real person's or company's NIF.",
+  "valid": [
+    {"nif": "89890001K", "kind": "dni", "note": "AEAT example NIF from the huella spec"},
+    {"nif": "12345678Z", "kind": "dni"},
+    {"nif": "00000000T", "kind": "dni"},
+    {"nif": "X1234567L", "kind": "nie"},
+    {"nif": "Y1234567X", "kind": "nie"},
+    {"nif": "Z1234567R", "kind": "nie"},
+    {"nif": "K1234567L", "kind": "klm"},
+    {"nif": "L1234567L", "kind": "klm"},
+    {"nif": "M1234567L", "kind": "klm"},
+    {"nif": "B12345674", "kind": "cif", "note": "numeric control"},
+    {"nif": "A1234567D", "kind": "cif", "note": "letter control accepted for any organisation letter"},
+    {"nif": "P1234567D", "kind": "cif"},
+    {"nif": "Q1234567D", "kind": "cif"},
+    {"nif": "N1234567D", "kind": "cif"},
+    {"nif": "W1234567D", "kind": "cif"}
+  ],
+  "normalised": [
+    {"input": "12345678z", "nif": "12345678Z"},
+    {"input": " 12345678-Z ", "nif": "12345678Z"},
+    {"input": "b-1234567.4", "nif": "B12345674"}
+  ],
+  "invalid": [
+    {"nif": "B12345678", "why": "wrong CIF control (the example used in SPEC 3.8)"},
+    {"nif": "12345678A", "why": "wrong DNI letter"},
+    {"nif": "X1234567A", "why": "wrong NIE letter"},
+    {"nif": "M1234567A", "why": "wrong K/L/M letter"},
+    {"nif": "B1234567E", "why": "wrong CIF control letter"},
+    {"nif": "I1234567D", "why": "I is not an organisation letter"},
+    {"nif": "1234567Z", "why": "too short"},
+    {"nif": "123456789Z", "why": "too long"},
+    {"nif": "1234A678Z", "why": "letter inside the number"},
+    {"nif": "ESB12345674", "why": "EU VAT form is not a NIF"},
+    {"nif": "", "why": "empty"},
+    {"nif": "12345678Ñ", "why": "non-ASCII"}
+  ]
+}
