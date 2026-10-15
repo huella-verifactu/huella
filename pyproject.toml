@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Samuil Vinitsiy Petrov" }]
 requires-python = ">=3.12"
 dependencies = [
+    "pydantic>=2.7",
     # zoneinfo needs an IANA database; Windows and slim containers have none.
     "tzdata>=2024.1",
 ]

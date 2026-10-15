@@ -10,6 +10,9 @@ positionally would produce a valid-looking but wrong hash.
 
 import hashlib
 
+from huella.format import TIMESTAMP_PATTERN, format_amount, format_date
+from huella.models import ChainLink, InvoiceAlta, InvoiceAnulacion
+
 TIPO_HUELLA_SHA256 = "01"
 
 
@@ -66,4 +69,32 @@ def huella_anulacion(*, nif: str, num: str, fecha: str, previa: str | None, ts: 
             ("Huella", previa or ""),
             ("FechaHoraHusoGenRegistro", ts),
         ]
+    )
+
+
+def hash_record(
+    record: InvoiceAlta | InvoiceAnulacion, *, previous: ChainLink | None, ts: str
+) -> str:
+    """Huella of a validated record, chained to ``previous`` (``None`` for the first record).
+
+    ``ts`` must be the exact text from :func:`huella.format.timestamp_madrid`; the same string
+    goes into ``FechaHoraHusoGenRegistro`` in the XML.
+    """
+    if not TIMESTAMP_PATTERN.fullmatch(ts):
+        raise ValueError(f"timestamp must come from timestamp_madrid(), got {ts!r}")
+    previa = previous.huella if previous is not None else None
+    fecha = format_date(record.issue_date)
+    if isinstance(record, InvoiceAnulacion):
+        return huella_anulacion(
+            nif=record.issuer_nif, num=record.number, fecha=fecha, previa=previa, ts=ts
+        )
+    return huella_alta(
+        nif=record.issuer_nif,
+        num=record.number,
+        fecha=fecha,
+        tipo=record.type,
+        cuota=format_amount(record.cuota_total),
+        importe=format_amount(record.total),
+        previa=previa,
+        ts=ts,
     )

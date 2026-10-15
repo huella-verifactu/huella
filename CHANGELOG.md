@@ -7,6 +7,14 @@ may change in any minor release.
 
 ## [Unreleased]
 
+### Added
+
+- `huella.nif`: Spanish NIF, NIE and CIF checksum validation and normalisation.
+- `huella.models`: immutable Pydantic models for altas, anulaciones and the SistemaInformatico
+  block, enforcing the AEAT validations in scope (invoice number characters, dates, VAT rates,
+  per-line tax within one cent, totals, recipients, corrective invoices, correction flags).
+- `hash_record()`: the huella of a validated record.
+
 ## [0.0.1] - 2026-10-15
 
 ### Added
