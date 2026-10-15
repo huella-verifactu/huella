@@ -1,0 +1,20 @@
+huella
+Copyright 2026 Samuil Petrov
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The directory src/huella/specs/ contains unmodified official files published by the
+Agencia Estatal de Administración Tributaria (AEAT), Spain, reused under the conditions of the
+AEAT website legal notice (source cited, content not altered, date of last update stated):
+
+  https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/
+
+Each file's source URL, last-update date and SHA-256 are listed in
+src/huella/specs/v1_0/SOURCES.md.
+
+src/huella/specs/v1_0/xmldsig-core-schema.xsd is an unmodified copy of the XML Signature schema
+published by the World Wide Web Consortium (W3C) under the W3C Software and Document License:
+
+  https://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd
+
+This project is not affiliated with, endorsed by or supported by the AEAT.

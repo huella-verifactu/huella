@@ -1,0 +1,79 @@
+[project]
+name = "huella"
+version = "0.0.1"
+description = "Open-source Verifactu core: record formatting, huella (SHA-256 chain hash), XML, QR and AEAT client."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Samuil Petrov" }]
+requires-python = ">=3.12"
+dependencies = [
+    # zoneinfo needs an IANA database; Windows and slim containers have none.
+    "tzdata>=2024.1",
+]
+keywords = ["verifactu", "aeat", "facturacion", "huella", "invoice", "spain"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: Spanish",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Typing :: Typed",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.100",
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/huella"]
+# The official PDFs stay in git as reference; only the XSD/WSDL ship.
+exclude = ["*.pdf"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["*.pdf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "src"]
+addopts = ["--strict-markers", "--strict-config", "-ra", "--doctest-modules", "--import-mode=importlib"]
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+source = ["huella"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["src", "tests", "scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "B", "UP", "N", "S", "C4", "SIM", "RUF", "PT", "PL", "DTZ", "T20",
+]
+ignore = [
+    "PLR2004", # magic values are fine in tests and spec constants
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"scripts/**" = ["T201"]

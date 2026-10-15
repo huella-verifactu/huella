@@ -1,0 +1,23 @@
+name: Spec question
+description: Something in the AEAT specification, or in how we implement it, is unclear or might be wrong.
+labels: ["spec-question"]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Official source
+      description: Document and section (e.g. "Validaciones_Errores_Veri-Factu.pdf, §1, NumSerieFactura") or XSD element.
+    validations:
+      required: true
+  - type: textarea
+    id: quote
+    attributes:
+      label: What the source says
+      description: Quote the relevant text (Spanish is fine).
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: What is unclear, and how does it affect the code? What would settle it?
+    validations:
+      required: true

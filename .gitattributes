@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Official AEAT/W3C files: stored byte-for-byte, never normalised (SOURCES.md hashes)
+src/huella/specs/** -text

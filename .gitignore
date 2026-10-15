@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# AEAT reference PDFs and error list: fetched by scripts/fetch_specs.py, never committed
+docs/aeat/
+*.pdf
+
+# Secrets, certificates and keys must never be committed (SPEC 11.4)
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+.env.*
+secrets/
+
+# Local databases and raw recorded traffic (anonymise before committing; SPEC 11.4)
+*.sqlite
+*.sqlite3
+recordings/
+tests/fixtures/raw/
