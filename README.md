@@ -5,45 +5,94 @@
 [![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue)](LICENSE)
 
 Open-source Python core for **Verifactu**, Spain's tamper-evident invoice record system
-(RD 1007/2023, Orden HAC/1177/2024): exact field formatting, the *huella* (the SHA-256 hash that
-chains every billing record to the previous one), and, in the coming releases, record models, XML
-with XSD validation, QR codes and the AEAT web service client.
+(RD 1007/2023, Orden HAC/1177/2024), in **VERI\*FACTU mode**:
 
-> **Status: pre-alpha (0.0.x).** Formatting and hashing are implemented and tested against the
-> AEAT's official test vectors. Models, XML, QR and the AEAT client arrive in 0.1.0. The API may
-> change in any 0.x release.
+- **Models** that reject what the AEAT would reject (NIF checksums, invoice number characters,
+  dates, VAT rates, totals, recipients, corrective invoices, correction flags).
+- The **huella**: the SHA-256 hash that chains every billing record to the previous one, tested
+  against the AEAT's official vectors.
+- **XML** for altas, anulaciones and the SOAP request, **validated against the official XSD**
+  before it leaves the library.
+- The **QR code** (URL, PNG, SVG) as the AEAT specifies it.
+- A **client** for the AEAT web service (mutual TLS) and a parser for its answers.
+
+> **Status: alpha (0.x).** The API may change in any minor release. Scope in v1: Spanish VAT at
+> 21, 10 and 4 %, regime 01, invoice types F1, F2, R1, R4, R5 (corrective *por diferencias*).
+
+## Install
+
+```sh
+pip install huella            # library
+pip install "huella[cli]"     # plus .p12/.pfx support for the development CLI
+```
 
 ## Quick start
 
-```sh
-pip install huella
-```
-
 ```python
 from datetime import UTC, datetime
-from decimal import Decimal
 
-from huella import format_amount, huella_alta, round_amount, timestamp_madrid
+from huella import InvoiceAlta, SistemaInformatico, hash_record, timestamp_madrid
+from huella import qr, xml
+from huella.models import Environment
 
-h = huella_alta(
-    nif="89890001K",
-    num="12345678/G33",
-    fecha="01-01-2024",
-    tipo="F1",
-    cuota=format_amount(round_amount(Decimal("12.345"))),  # "12.35"
-    importe=format_amount(Decimal("123.45")),
-    previa=None,  # first record of the chain
-    ts=timestamp_madrid(
-        datetime(2024, 1, 1, 18, 20, 30, tzinfo=UTC)
-    ),  # "2024-01-01T19:20:30+01:00"
+alta = InvoiceAlta.model_validate(
+    {
+        "issuer_nif": "B12345674",
+        "issuer_name": "TIENDA EJEMPLO SL",
+        "number": "2026-000123",
+        "issue_date": "2026-01-20",
+        "type": "F2",
+        "description": "Venta online - pedido 1234",
+        "tax_lines": [{"rate": "21.00", "base": "82.64", "tax": "17.36"}],
+        "total": "100.00",
+    }
+)  # raises pydantic.ValidationError with field paths on any rule
+sif = SistemaInformatico(
+    producer_name="PRODUCTOR DE EJEMPLO",
+    producer_nif="X1234567L",
+    version="0.1.0",
+    installation_number="HU-0001",
 )
-assert h == "3C464DAF61ACB827C65FDA19F352A4E3BDC2C640E9E9FC4CC058073F38F12F60"
+
+ts = timestamp_madrid(datetime.now(UTC))  # "2026-01-20T10:15:03+01:00"
+huella = hash_record(alta, previous=None, ts=ts)  # first record of the chain
+record = xml.registro_alta(alta, previous=None, ts=ts, huella=huella, sif=sif)
+request = xml.envelope(obligado=("TIENDA EJEMPLO SL", "B12345674"), registros=[record])
+url = qr.url(alta, Environment.TEST)  # .../ValidarQR?nif=B12345674&...
 ```
+
+Sending (needs the taxpayer's qualified certificate):
+
+```python
+from huella.aeat import AeatClient, client_ssl_context
+
+context = client_ssl_context("cert.pem", "key.pem")
+with AeatClient(env=Environment.TEST, ssl_context=context) as aeat:
+    result = aeat.send(request)
+print(result.status, result.wait_seconds, [r.status for r in result.records])
+```
+
+`result.wait_seconds` is the AEAT's `TiempoEsperaEnvio`: wait that long, or until 1,000 records
+have queued, before the next request.
+
+## Development CLI
+
+A batch file lists the records to chain (see [`examples/batch.json`](examples/batch.json)):
+
+```sh
+huella hash examples/batch.json                  # chained huellas, as JSON
+huella xml  examples/batch.json --out req.xml    # the SOAP request, XSD-validated
+huella send examples/batch.json --cert my.p12 --password-env P12_PASSWORD --save out/
+```
+
+`send` targets the AEAT **pre-production** environment by default. Production needs
+`--env production --yes-production`, because production records are real tax records and cannot
+be deleted. The output includes `next_previous`: put it in the next batch to continue the chain.
 
 ## Hash traps
 
 The huella is a SHA-256 over text, so values that look equal but are spelled differently produce a
-different hash. Each row below is a test in `tests/test_hash.py`.
+different hash. Each row is a test in `tests/test_hash.py`.
 
 | Trap | Wrong | Right |
 |---|---|---|
@@ -55,6 +104,15 @@ different hash. Each row below is a test in `tests/test_hash.py`.
 | Previous huella case | lowercase hex | uppercase hex |
 | Empty previous huella | field left out | `Huella=` present with an empty value |
 
+## Security notes
+
+- Certificates are a legal identity. Keep `.p12`/`.pfx` files and passwords out of repositories
+  and logs. The CLI reads passwords from an environment variable or a prompt, never from an
+  argument, and writes the key to disk only encrypted, for the moment the TLS context loads.
+- XML from outside (AEAT answers, stored records) is parsed with DTDs, entities and network
+  access disabled.
+- Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
+
 ## Development
 
 ```sh
@@ -65,7 +123,7 @@ uv run ruff check . && uv run ruff format --check . && uv run mypy
 
 The official AEAT schemas are in `src/huella/specs/v1_0/` (sources and dates in `SOURCES.md`).
 The reference PDFs are not committed; `uv run python scripts/fetch_specs.py` downloads them. See
-[CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Disclaimer
 
