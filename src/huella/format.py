@@ -15,7 +15,7 @@ MADRID = ZoneInfo("Europe/Madrid")
 
 _CENT = Decimal("0.01")
 _AMOUNT_LIMIT = Decimal("1E12")  # XSD ImporteSgn12.2Type allows 12 integer digits
-_TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}")
+TIMESTAMP_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}")
 
 
 def _to_decimal(value: Decimal | int) -> Decimal:
@@ -74,6 +74,6 @@ def timestamp_madrid(instant: datetime) -> str:
     if instant.utcoffset() is None:
         raise ValueError("timestamp needs a time-zone-aware datetime")
     text = instant.astimezone(MADRID).isoformat(timespec="seconds")
-    if not _TIMESTAMP_RE.fullmatch(text):
+    if not TIMESTAMP_PATTERN.fullmatch(text):
         raise ValueError(f"Madrid offset cannot be written as +HH:MM for this instant: {text}")
     return text
