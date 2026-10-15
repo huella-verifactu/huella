@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic response written to RespuestaSuministro.xsd for tests; not recorded traffic. -->
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Header/>
+  <env:Body Id="Body">
+    <tikR:RespuestaRegFactuSistemaFacturacion xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+      <tikR:Cabecera>
+        <tik:ObligadoEmision>
+          <tik:NombreRazon>TIENDA EJEMPLO SL</tik:NombreRazon>
+          <tik:NIF>B12345674</tik:NIF>
+        </tik:ObligadoEmision>
+      </tikR:Cabecera>
+      <tikR:TiempoEsperaEnvio>60</tikR:TiempoEsperaEnvio>
+      <tikR:EstadoEnvio>Incorrecto</tikR:EstadoEnvio>
+      <tikR:RespuestaLinea>
+        <tikR:IDFactura>
+          <tik:IDEmisorFactura>B12345674</tik:IDEmisorFactura>
+          <tik:NumSerieFactura>2026-000123</tik:NumSerieFactura>
+          <tik:FechaExpedicionFactura>20-01-2026</tik:FechaExpedicionFactura>
+        </tikR:IDFactura>
+        <tikR:Operacion>
+          <tik:TipoOperacion>Alta</tik:TipoOperacion>
+        </tikR:Operacion>
+        <tikR:EstadoRegistro>Incorrecto</tikR:EstadoRegistro>
+        <tikR:CodigoErrorRegistro>3000</tikR:CodigoErrorRegistro>
+        <tikR:DescripcionErrorRegistro>Registro de facturación duplicado.</tikR:DescripcionErrorRegistro>
+        <tikR:RegistroDuplicado>
+          <tik:IdPeticionRegistroDuplicado>20260120101505000001</tik:IdPeticionRegistroDuplicado>
+          <tik:EstadoRegistroDuplicado>Correcta</tik:EstadoRegistroDuplicado>
+        </tikR:RegistroDuplicado>
+      </tikR:RespuestaLinea>
+    </tikR:RespuestaRegFactuSistemaFacturacion>
+  </env:Body>
+</env:Envelope>

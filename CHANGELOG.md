@@ -20,7 +20,9 @@ may change in any minor release.
 - `huella.xml`: `registro_alta()`, `registro_anulacion()` and `envelope()` build the AEAT XML in
   XSD order and validate it against the bundled official XSD before returning (offline). Stored
   records are re-parsed without DTDs, entities or network access.
-- `huella.errors`: `HuellaError`, `SchemaError`.
+- `huella.errors`: `HuellaError`, `SchemaError`, `TransportError`, `CertificateError`, `AeatFault`.
+- `huella.aeat`: endpoints from the WSDL, `client_ssl_context()` for mutual TLS, `AeatClient.send()`
+  and `parse_response()` (per-record status, error codes, duplicates, CSV, `TiempoEsperaEnvio`).
 
 ## [0.0.1] - 2026-10-15
 

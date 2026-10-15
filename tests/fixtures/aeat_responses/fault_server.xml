@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SOAP fault: server-side problem, the request must be resent unchanged. -->
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Body>
+    <env:Fault>
+      <faultcode>env:Server</faultcode>
+      <faultstring>Error interno del servidor. Inténtelo de nuevo más tarde.</faultstring>
+    </env:Fault>
+  </env:Body>
+</env:Envelope>

@@ -64,7 +64,7 @@ class _BundledSchemas(etree.Resolver):
 _schemas = threading.local()  # lxml validators are not shared between threads
 
 
-def _schema(filename: str) -> etree.XMLSchema:
+def load_schema(filename: str) -> etree.XMLSchema:
     cache: dict[str, etree.XMLSchema] = _schemas.__dict__.setdefault("cache", {})
     if filename not in cache:
         parser = etree.XMLParser(no_network=True, load_dtd=False, resolve_entities=False)
@@ -74,7 +74,7 @@ def _schema(filename: str) -> etree.XMLSchema:
 
 
 def _validate(element: etree._Element, filename: str) -> None:
-    schema = _schema(filename)
+    schema = load_schema(filename)
     if not schema.validate(element):
         raise SchemaError(f"{filename}: {schema.error_log.last_error}")
 
