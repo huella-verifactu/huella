@@ -58,27 +58,31 @@ exclude = ["*.pdf"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "src"]
+# scripts/fetch_specs.py is tested as a module (tests/test_fetch_specs.py).
+pythonpath = ["scripts"]
 addopts = ["--strict-markers", "--strict-config", "-ra", "--doctest-modules", "--import-mode=importlib"]
 xfail_strict = true
 
 [tool.coverage.run]
 branch = true
-source = ["huella"]
+source = ["huella", "scripts"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 fail_under = 90
+exclude_also = ["if __name__ == .__main__.:"]
 
 [tool.mypy]
 strict = true
 python_version = "3.12"
 files = ["src", "tests", "scripts"]
+mypy_path = "scripts"
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = [

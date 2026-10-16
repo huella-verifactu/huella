@@ -122,8 +122,9 @@ uv run ruff check . && uv run ruff format --check . && uv run mypy
 ```
 
 The official AEAT schemas are in `src/huella/specs/v1_0/` (sources and dates in `SOURCES.md`).
-The reference PDFs are not committed; `uv run python scripts/fetch_specs.py` downloads them. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+The reference PDFs are not committed; `uv run python scripts/fetch_specs.py` downloads them and
+reports any file the AEAT has changed since. A workflow runs that check every morning and opens an
+issue on drift. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Disclaimer
 

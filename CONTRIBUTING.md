@@ -17,7 +17,7 @@ You need [uv](https://docs.astral.sh/uv/) and Python 3.12.
 uv sync
 uv run pytest --cov                     # tests, doctests and coverage (gate: 90%)
 uv run ruff check . && uv run ruff format --check . && uv run mypy
-uv run python scripts/fetch_specs.py    # optional: the AEAT reference PDFs, into docs/aeat/
+uv run python scripts/fetch_specs.py    # optional: AEAT files into docs/aeat/, reports drift
 ```
 
 Install the pre-commit hooks once. They run [gitleaks](https://github.com/gitleaks/gitleaks) so a
