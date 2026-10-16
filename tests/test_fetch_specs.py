@@ -3,6 +3,7 @@
 import hashlib
 import http.client
 import io
+import ssl
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -30,6 +31,7 @@ from fetch_specs import (
     http_date,
     main,
     parse_sources,
+    tls_context,
 )
 from huella.xml import SPECS
 
@@ -266,7 +268,7 @@ class FakeResponse(io.BytesIO):
 def fake_urlopen(monkeypatch: pytest.MonkeyPatch, outcome: FakeResponse | Exception) -> list[str]:
     calls: list[str] = []
 
-    def urlopen(url: str, timeout: float) -> Any:
+    def urlopen(url: str, timeout: float, context: ssl.SSLContext) -> Any:
         calls.append(url)
         if isinstance(outcome, Exception):
             raise outcome
@@ -318,6 +320,17 @@ def test_download_incomplete_read_is_unreachable(monkeypatch: pytest.MonkeyPatch
 
     with pytest.raises(UnreachableError, match="IncompleteRead"):
         download("https://x/a.pdf")
+
+
+def test_legacy_tls_only_for_the_host_with_a_sha1_intermediate() -> None:
+    legacy = tls_context("https://www.agenciatributaria.es/static_files/a.pdf")
+    modern = tls_context("https://www2.agenciatributaria.gob.es/static_files/a.xsd")
+
+    assert legacy.security_level == 0
+    assert modern.security_level > 0
+    for context in (legacy, modern):
+        assert context.verify_mode is ssl.CERT_REQUIRED
+        assert context.check_hostname
 
 
 @pytest.mark.parametrize("value", [None, "", "not a date"])

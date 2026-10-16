@@ -20,8 +20,10 @@ import argparse
 import hashlib
 import http.client
 import re
+import ssl
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -37,6 +39,11 @@ DEFAULT_DEST = Path(__file__).resolve().parent.parent / "docs" / "aeat"
 COMMITTED_SUFFIXES = (".xsd", ".wsdl")
 # A file no longer at its URL was moved or withdrawn: that is drift, not a network failure.
 GONE_HTTP_STATUSES = frozenset({404, 410})
+# www.agenciatributaria.es (the PDFs) chains to an FNMT intermediate signed with SHA-1 (valid to
+# 2028). OpenSSL 3 refuses it at security level 1 and above, as on Linux CI runners. For this
+# host only, level 0 accepts it: the chain and host name are still verified, and the content is
+# compared by SHA-256 anyway.
+LEGACY_TLS_HOSTS = frozenset({"www.agenciatributaria.es"})
 
 EXIT_OK = 0
 EXIT_DRIFT = 3
@@ -119,9 +126,17 @@ def http_date(value: str | None) -> date | None:
         return None
 
 
+def tls_context(url: str) -> ssl.SSLContext:
+    context = ssl.create_default_context()
+    if urllib.parse.urlsplit(url).hostname in LEGACY_TLS_HOSTS:
+        context.set_ciphers("DEFAULT:@SECLEVEL=0")
+    return context
+
+
 def download(url: str) -> Download:
+    context = tls_context(url)
     try:
-        with urllib.request.urlopen(url, timeout=TIMEOUT_S) as response:  # noqa: S310 - https URLs from SOURCES.md
+        with urllib.request.urlopen(url, timeout=TIMEOUT_S, context=context) as response:  # noqa: S310 - https URLs from SOURCES.md
             body: bytes = response.read()
             last_modified = http_date(response.headers.get("Last-Modified"))
     except urllib.error.HTTPError as exc:
