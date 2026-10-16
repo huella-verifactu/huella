@@ -110,9 +110,15 @@ def test_several_rates_and_nif_normalisation() -> None:
     assert alta.cuota_total == Decimal("3.50")
 
 
-def test_rounding_tolerance_of_one_cent_per_line() -> None:
-    line = {"rate": "21.00", "base": "0.05", "tax": "0.02"}  # exact 0.0105 -> 0.01, off by 0.01
-    assert InvoiceAlta.model_validate(f2(tax_lines=[line], total="0.07"))
+def test_tax_rounded_per_order_line_is_accepted() -> None:
+    # 20 lines of 0.10 at 21 %, tax rounded per line (0.02 each): 0.40 where 21 % of 2.00 is 0.42.
+    line = {"rate": "21.00", "base": "2.00", "tax": "0.40"}
+    assert InvoiceAlta.model_validate(f2(tax_lines=[line], total="2.40"))
+
+
+def test_tax_tolerance_edge() -> None:
+    line = {"rate": "21.00", "base": "82.64", "tax": "18.35"}  # 21 % is 17.35: off by exactly 1.00
+    assert InvoiceAlta.model_validate(f2(tax_lines=[line], total="100.99"))
 
 
 def test_free_order_is_allowed() -> None:
@@ -168,9 +174,9 @@ def test_models_are_immutable() -> None:
             id="rate-out-of-scope",
         ),
         pytest.param(
-            f2(tax_lines=[{"rate": "21.00", "base": "82.64", "tax": "17.38"}], total="100.02"),
+            f2(tax_lines=[{"rate": "21.00", "base": "82.64", "tax": "18.36"}], total="101.00"),
             "tax_lines.0",
-            id="tax-off-by-two-cents",
+            id="tax-off-by-more-than-one-euro",
         ),
         pytest.param(
             f2(tax_lines=[{"rate": "21.00", "base": "82.645", "tax": "17.36"}]),

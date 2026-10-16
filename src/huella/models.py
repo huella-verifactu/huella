@@ -31,7 +31,10 @@ from huella.nif import validate_nif
 
 VERIFACTU_START = date(2024, 10, 28)  # Orden HAC/1177/2024 in force; AEAT rejects older dates
 SIMPLIFIED_INVOICE_MAX = Decimal("3000.00")  # AEAT check on F2 totals (validations 15.8)
-TAX_TOLERANCE = Decimal("0.01")  # stricter than the AEAT's 10.00, to catch mapping bugs
+# Per tax line. Shops that round tax per order line (WooCommerce's default) drift by up to
+# half a cent per line, so 0.01 refused real invoices. 1.00 is still ten times stricter than
+# the AEAT's 10.00; wrong-rate bugs are caught by SUPPORTED_RATES (decided 16 Oct, SPEC 3.3).
+TAX_TOLERANCE = Decimal("1.00")
 SUPPORTED_RATES = (Decimal("21"), Decimal("10"), Decimal("4"))  # v1 scope (SPEC 1.1)
 MAX_TAX_LINES = 12  # XSD DesgloseType
 _NUMBER_FORBIDDEN = frozenset("\"'<>=")

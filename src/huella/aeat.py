@@ -47,6 +47,18 @@ _NS = {"r": NS_R, "sf": NS_SF}
 _FAULT_CODE = re.compile(r"Codigo\[(\d+)\]")
 _HTTP_UNAUTHORIZED = frozenset({401, 403})
 _HTTP_WITH_SOAP_BODY = frozenset({200, 500})  # SOAP 1.1 faults travel with HTTP 500
+# TLS alerts a server sends about the *client's* certificate. Any other TLS failure (our own
+# failure to verify the AEAT's certificate, a middlebox, a protocol error, an ambiguous
+# handshake_failure) is not the taxpayer's fault: TransportError, retried, never a pause.
+_CLIENT_CERTIFICATE_ALERTS = (
+    "BAD_CERTIFICATE",
+    "UNKNOWN_CA",
+    "CERTIFICATE_REQUIRED",
+    "CERTIFICATE_EXPIRED",
+    "CERTIFICATE_REVOKED",
+    "CERTIFICATE_UNKNOWN",
+    "UNSUPPORTED_CERTIFICATE",
+)
 
 
 class SubmissionStatus(StrEnum):
@@ -204,6 +216,11 @@ def client_ssl_context(
     return context
 
 
+def _refuses_client_certificate(message: str) -> bool:
+    upper = message.upper()
+    return "ALERT" in upper and any(alert in upper for alert in _CLIENT_CERTIFICATE_ALERTS)
+
+
 class AeatClient:
     """Sends envelopes from :func:`huella.xml.envelope` to the AEAT over mutual TLS."""
 
@@ -228,8 +245,8 @@ class AeatClient:
         try:
             response = self._http.post(self.endpoint, content=envelope)
         except httpx.ConnectError as exc:
-            if "SSL" in str(exc) or "CERTIFICATE" in str(exc).upper():
-                raise CertificateError(f"TLS handshake with the AEAT failed: {exc}") from exc
+            if _refuses_client_certificate(str(exc)):
+                raise CertificateError(f"the AEAT refused the client certificate: {exc}") from exc
             raise TransportError(f"cannot reach the AEAT: {exc}") from exc
         except httpx.HTTPError as exc:
             raise TransportError(f"no usable answer from the AEAT: {exc}") from exc

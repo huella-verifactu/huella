@@ -218,12 +218,40 @@ def test_timeout_is_a_transport_error() -> None:
         aeat.send(ENVELOPE)
 
 
-def test_tls_failure_is_a_certificate_error() -> None:
+@pytest.mark.parametrize(
+    "message",
+    [
+        "[SSL: SSLV3_ALERT_BAD_CERTIFICATE] sslv3 alert bad certificate",
+        "[SSL: TLSV1_ALERT_UNKNOWN_CA] tlsv1 alert unknown ca",
+        "[SSL: TLSV13_ALERT_CERTIFICATE_REQUIRED] tlsv13 alert certificate required",
+        "[SSL: SSLV3_ALERT_CERTIFICATE_EXPIRED] sslv3 alert certificate expired",
+        "[SSL: SSLV3_ALERT_CERTIFICATE_REVOKED] sslv3 alert certificate revoked",
+    ],
+)
+def test_the_aeat_refusing_our_certificate_is_a_certificate_error(message: str) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
-        message = "[SSL: SSLV3_ALERT_BAD_CERTIFICATE] bad certificate"
         raise httpx.ConnectError(message, request=request)
 
     with client(handler) as aeat, pytest.raises(CertificateError):
+        aeat.send(ENVELOPE)
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer",
+        "[SSL: WRONG_VERSION_NUMBER] wrong version number",
+        "[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure",
+        "[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol",
+    ],
+)
+def test_other_tls_failures_are_not_the_taxpayers_fault(message: str) -> None:
+    # Above all CERTIFICATE_VERIFY_FAILED: *we* could not verify the AEAT (a broken trust store).
+    # As a CertificateError it would pause every customer at once.
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError(message, request=request)
+
+    with client(handler) as aeat, pytest.raises(TransportError):
         aeat.send(ENVELOPE)
 
 

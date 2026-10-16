@@ -7,6 +7,17 @@ may change in any minor release.
 
 ## [Unreleased]
 
+### Changed
+
+- The tax of each tax line may now differ from base x rate by up to **1.00** (was 0.01). Shops
+  that round tax per order line, as WooCommerce does by default, drift by up to half a cent per
+  line, and the stricter rule refused correct invoices. Still ten times stricter than the AEAT's
+  10.00; rates other than 21, 10 and 4 % are refused as before.
+- `AeatClient` raises `CertificateError` only for TLS alerts about the client certificate (bad,
+  unknown CA, required, expired, revoked, unknown, unsupported). Every other TLS failure, above
+  all a failure to verify the AEAT's own certificate, is now a retryable `TransportError`: it is
+  not the taxpayer's certificate that is wrong.
+
 ## [0.1.0] - 2026-10-15
 
 ### Added
