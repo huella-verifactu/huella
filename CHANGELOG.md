@@ -7,6 +7,8 @@ may change in any minor release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 ### Changed
 
 - The tax of each tax line may now differ from base x rate by up to **1.00** (was 0.01). Shops
@@ -50,6 +52,7 @@ may change in any minor release.
 - `round_amount()`: rounding to cents, half away from zero, before formatting.
 - The official AEAT XSD and WSDL files (spec version 1.0) in `huella/specs/v1_0/`.
 
-[Unreleased]: https://github.com/huella-verifactu/huella/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/huella-verifactu/huella/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/huella-verifactu/huella/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/huella-verifactu/huella/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/huella-verifactu/huella/releases/tag/v0.0.1
