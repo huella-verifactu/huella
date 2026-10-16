@@ -7,6 +7,14 @@ may change in any minor release.
 
 ## [Unreleased]
 
+### Added
+
+- AEAT spec drift check: `scripts/fetch_specs.py` downloads every official file listed in
+  `specs/v1_0/SOURCES.md` and compares the schemas and WSDL byte for byte with the committed
+  copies, and the reference documents with their recorded SHA-256 and `Last-Modified` date. Exit
+  `3` is drift, `4` "could not check" (a network failure is never reported as drift). The
+  `spec-drift` workflow runs it every morning and opens an issue on drift.
+
 ## [0.2.0] - 2026-10-16
 
 ### Changed

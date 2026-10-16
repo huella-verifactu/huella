@@ -1,0 +1,95 @@
+name: Spec drift
+
+# Every morning, download the official AEAT files listed in src/huella/specs/v1_0/SOURCES.md and
+# compare them with what the code was built against (scripts/fetch_specs.py, SPEC 11.5).
+# Drift (exit 3) opens a "spec-drift" issue, or comments on the open one when something new
+# changed. A network failure (exit 4) fails the run without an issue: it is not drift.
+
+on:
+  schedule:
+    - cron: "17 5 * * *" # 06:17 / 07:17 in Madrid
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/spec-drift.yml"
+      - "scripts/fetch_specs.py"
+      - "src/huella/specs/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spec-drift-${{ github.ref }}
+
+jobs:
+  check:
+    name: official AEAT files unchanged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+
+      - name: Compare the official files with SOURCES.md
+        id: check
+        run: |
+          set +e
+          uv run python scripts/fetch_specs.py > report.txt
+          code=$?
+          set -e
+          cat report.txt
+          { echo '```'; cat report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the drift issue
+        if: steps.check.outputs.code == '3' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Every name is in the body; the title is capped well under GitHub's 256 characters.
+          changed=$(grep -E '^CHANGED ' report.txt | awk '{print $2}' | tr -d ':' | paste -sd ' ' | cut -c1-200)
+          {
+            echo "The daily drift check ($RUN_URL) found official files that differ from \`SOURCES.md\`."
+            echo
+            echo '```'
+            cat report.txt
+            echo '```'
+            echo
+            echo "Run \`uv run python scripts/fetch_specs.py\` and read the new files in \`docs/aeat/\`."
+            echo "A changed schema or WSDL goes into a new \`src/huella/specs/v1_x/\` folder (never edit"
+            echo "the current one) and a minor release; records already built keep the XML they were"
+            echo "built with. For a reference document or a new date only, update its row in \`SOURCES.md\`."
+          } > body.md
+
+          gh label create spec-drift --color B60205 --force \
+            --description "An official AEAT file changed (scripts/fetch_specs.py)"
+          open=$(gh issue list --label spec-drift --state open --json number --jq '.[0].number // empty')
+          if [ -z "$open" ]; then
+            gh issue create --title "AEAT spec drift: $changed" --label spec-drift --body-file body.md
+            exit 0
+          fi
+          # Comment only when a CHANGED line is not already in the issue, so an unresolved drift
+          # does not notify every morning.
+          seen=$(gh issue view "$open" --json body,comments --jq '[.body] + [.comments[].body] | join("\n")')
+          if grep -E '^CHANGED ' report.txt | grep -qvxF -f <(printf '%s\n' "$seen" | tr -d '\r'); then
+            gh issue comment "$open" --body-file body.md
+          fi
+
+      - name: Fail unless every file matched
+        if: steps.check.outputs.code != '0'
+        env:
+          CODE: ${{ steps.check.outputs.code }}
+        run: |
+          case "$CODE" in
+            3) echo "::error::AEAT spec drift: an official file changed (see the report above)" ;;
+            4) echo "::error::Could not check the official files (network failure); this is not drift" ;;
+            *) echo "::error::The drift check itself failed (exit $CODE)" ;;
+          esac
+          exit 1
