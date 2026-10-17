@@ -29,12 +29,12 @@ from huella.models import (
 )
 
 NS_SOAP = "http://schemas.xmlsoap.org/soap/envelope/"
-_AEAT_WS = (
+AEAT_WS = (
     "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/"
     "tike/cont/ws/"
 )
-NS_LR = _AEAT_WS + "SuministroLR.xsd"
-NS_SF = _AEAT_WS + "SuministroInformacion.xsd"
+NS_LR = AEAT_WS + "SuministroLR.xsd"
+NS_SF = AEAT_WS + "SuministroInformacion.xsd"
 ID_VERSION = "1.0"
 MAX_RECORDS = 1000  # per request, all for one obligado
 
@@ -87,6 +87,11 @@ def _sf(parent: etree._Element, tag: str, text: str | None = None) -> etree._Ele
     if text is not None:
         element.text = text
     return element
+
+
+# Shared with huella.consulta, which builds its request from the same pieces.
+sf_element = _sf
+validate = _validate
 
 
 def _id_factura(parent: etree._Element, tag: str, nif: str, number: str, issued: date) -> None:

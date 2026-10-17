@@ -346,3 +346,39 @@ def test_console_script_exits_with_the_command_status(
         run_script()
     assert exc.value.code == 0
     assert "next_previous" in capsys.readouterr().out
+
+
+def test_consulta_follows_the_pages(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
+    cert_file, key_file = pem_files(tmp_path)
+    pages = [RESPONSES / "consulta_con_datos.xml", RESPONSES / "consulta_sin_datos.xml"]
+    sent: list[bytes] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        sent.append(request.content)
+        return httpx.Response(200, content=pages[len(sent) - 1].read_bytes())
+
+    code, out, _ = run(
+        capsys,
+        "consulta", "--cert", str(cert_file), "--key", str(key_file), "--nif", "B12345674",
+        "--name", "TIENDA EJEMPLO SL", "--year", "2026", "--month", "1",
+        transport=httpx.MockTransport(answer),
+    )  # fmt: skip
+    assert code == 0
+    result = json.loads(out)
+    assert result["complete"] is True
+    assert [r["number"] for r in result["records"]] == ["2026-000123", "2026-000124"]
+    assert result["records"][1]["state"] == "AceptadoConErrores"
+    assert b"ClavePaginacion" not in sent[0]
+    assert b"ClavePaginacion" in sent[1]  # the second request asks for the next page
+
+
+def test_consulta_rejects_a_bad_month(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
+    cert_file, key_file = pem_files(tmp_path)
+    code, _, err = run(
+        capsys,
+        "consulta", "--cert", str(cert_file), "--key", str(key_file), "--nif", "B12345674",
+        "--name", "T", "--year", "2026", "--month", "13",
+        transport=answering("consulta_sin_datos.xml"),
+    )  # fmt: skip
+    assert code == 1
+    assert "month" in err
