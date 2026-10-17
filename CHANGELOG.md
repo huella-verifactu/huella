@@ -7,6 +7,8 @@ may change in any minor release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-17
+
 ### Added
 
 - The consulta service (`huella.consulta`): `consulta_envelope()` builds a
@@ -67,7 +69,8 @@ may change in any minor release.
 - `round_amount()`: rounding to cents, half away from zero, before formatting.
 - The official AEAT XSD and WSDL files (spec version 1.0) in `huella/specs/v1_0/`.
 
-[Unreleased]: https://github.com/huella-verifactu/huella/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/huella-verifactu/huella/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/huella-verifactu/huella/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/huella-verifactu/huella/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/huella-verifactu/huella/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/huella-verifactu/huella/releases/tag/v0.0.1
