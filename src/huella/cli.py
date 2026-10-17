@@ -3,6 +3,11 @@
     huella hash  batch.json
     huella xml   batch.json [--out request.xml]
     huella send  batch.json --cert cert.p12 [--password-env VAR] [--env test] [--save DIR]
+    huella consulta --cert cert.p12 --nif B12345674 --name "TIENDA SL" --year 2026 --month 1
+        [--number 2026-000123] [--date 2026-01-20] [--env test]
+
+``consulta`` asks which records the AEAT holds (registers nothing, so it is also the way to
+check a production connection without a real invoice).
 
 A batch file holds the obligado, the SistemaInformatico block, the previous chain link (or null)
 and the records, chained in order; see ``examples/batch.json``. Output is JSON on stdout. It
@@ -21,7 +26,7 @@ import sys
 import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal, NoReturn
 
@@ -30,6 +35,7 @@ from lxml import etree
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from huella.aeat import DEFAULT_TIMEOUT_S, AeatClient, SubmissionStatus, client_ssl_context
+from huella.consulta import HeldRecord, PageKey, consulta_envelope
 from huella.errors import CertificateError, HuellaError
 from huella.format import timestamp_madrid
 from huella.hash import hash_record
@@ -246,7 +252,74 @@ def _cmd_send(args: argparse.Namespace, transport: httpx.BaseTransport | None) -
     return EXIT_OK if result.status is SubmissionStatus.CORRECT else EXIT_NOT_ALL_ACCEPTED
 
 
+MAX_CONSULTA_PAGES = 50
+
+
+def _held_json(record: HeldRecord) -> dict[str, Any]:
+    return {
+        "issuer_nif": record.issuer_nif,
+        "number": record.number,
+        "issue_date": record.issue_date.isoformat(),
+        "state": record.state.value,
+        "huella": record.huella,
+        "generated_at": record.generated_at,
+        "type": record.invoice_type,
+        "total": record.total,
+        "tax_total": record.tax_total,
+        "subsanacion": record.subsanacion,
+        "last_modified": record.last_modified,
+        "error_code": record.error_code,
+        "error_message": record.error_message,
+    }
+
+
+def _cmd_consulta(args: argparse.Namespace, transport: httpx.BaseTransport | None) -> int:
+    held: list[HeldRecord] = []
+    page: PageKey | None = None
+    with AeatClient(
+        env=Environment(args.env),
+        ssl_context=_ssl_context(args),
+        seal=args.seal,
+        timeout=args.timeout,
+        transport=transport,
+    ) as client:
+        for _ in range(MAX_CONSULTA_PAGES):
+            request = consulta_envelope(
+                obligado=(args.name, args.nif),
+                year=args.year,
+                month=args.month,
+                number=args.number,
+                issue_date=args.date,
+                page=page,
+            )
+            result = client.consulta(request)
+            held.extend(result.records)
+            if result.next_page is not None and result.next_page == page:
+                raise UsageError("the AEAT returned the same page twice; stopping")
+            page = result.next_page
+            if page is None:
+                break
+    _print_json({"records": [_held_json(r) for r in held], "complete": page is None})
+    if page is not None:
+        print(
+            f"warning: stopped after {MAX_CONSULTA_PAGES} pages; narrow the query "
+            "(--number, --date) to see the rest",
+            file=sys.stderr,
+        )
+        return EXIT_ERROR
+    return EXIT_OK
+
+
 # --- Entry point -------------------------------------------------------------------------------
+
+
+def _connection_options(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--env", choices=["test", "production"], default="test")
+    command.add_argument("--cert", type=Path, required=True, help=".p12/.pfx or PEM")
+    command.add_argument("--key", type=Path, help="PEM private key, if not in --cert")
+    command.add_argument("--password-env", help="env var holding the .p12 password")
+    command.add_argument("--seal", action="store_true", help="seal certificate endpoint")
+    command.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_S)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -262,14 +335,17 @@ def _parser() -> argparse.ArgumentParser:
         if name == "xml":
             command.add_argument("--out", type=Path, help="write to this file instead of stdout")
         if name == "send":
-            command.add_argument("--env", choices=["test", "production"], default="test")
-            command.add_argument("--cert", type=Path, required=True, help=".p12/.pfx or PEM")
-            command.add_argument("--key", type=Path, help="PEM private key, if not in --cert")
-            command.add_argument("--password-env", help="env var holding the .p12 password")
-            command.add_argument("--seal", action="store_true", help="seal certificate endpoint")
+            _connection_options(command)
             command.add_argument("--save", type=Path, help="folder for request/response XML")
-            command.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_S)
             command.add_argument("--yes-production", action="store_true")
+    consulta = commands.add_parser("consulta", help="list the records the AEAT holds")
+    _connection_options(consulta)
+    consulta.add_argument("--nif", required=True, help="the obligado's NIF")
+    consulta.add_argument("--name", required=True, help="the obligado's legal name")
+    consulta.add_argument("--year", type=int, required=True)
+    consulta.add_argument("--month", type=int, required=True, help="1 to 12")
+    consulta.add_argument("--number", help="only this invoice number")
+    consulta.add_argument("--date", type=date.fromisoformat, help="only this issue date")
     return parser
 
 
@@ -285,6 +361,8 @@ def main(argv: Sequence[str] | None = None, *, transport: httpx.BaseTransport | 
             return _cmd_hash(args)
         if args.command == "xml":
             return _cmd_xml(args)
+        if args.command == "consulta":
+            return _cmd_consulta(args, transport)
         return _cmd_send(args, transport)
     except ValidationError as exc:
         print(f"error: {_describe(exc)}", file=sys.stderr)

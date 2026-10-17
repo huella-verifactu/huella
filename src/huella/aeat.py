@@ -13,7 +13,6 @@ Per-record outcomes (accepted, accepted with errors, rejected, duplicate) are da
 exceptions: see :class:`SubmissionResult`.
 """
 
-import re
 import ssl
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -25,7 +24,9 @@ from typing import Self
 import httpx
 from lxml import etree
 
-from huella.errors import AeatFault, CertificateError, TransportError
+from huella._soap import fault, parse_xml
+from huella.consulta import ConsultaResult, parse_consulta
+from huella.errors import CertificateError, TransportError
 from huella.models import Environment
 from huella.xml import NS_SF, NS_SOAP
 
@@ -44,7 +45,6 @@ NS_R = (
 DEFAULT_WAIT_SECONDS = 60  # Orden HAC/1177/2024 art. 16.2: initial value of the wait time
 DEFAULT_TIMEOUT_S = 30.0
 _NS = {"r": NS_R, "sf": NS_SF}
-_FAULT_CODE = re.compile(r"Codigo\[(\d+)\]")
 _HTTP_UNAUTHORIZED = frozenset({401, 403})
 _HTTP_WITH_SOAP_BODY = frozenset({200, 500})  # SOAP 1.1 faults travel with HTTP 500
 # TLS alerts a server sends about the *client's* certificate. Any other TLS failure (our own
@@ -115,17 +115,6 @@ class SubmissionResult:
 # --- Parsing -------------------------------------------------------------------------------------
 
 
-def _parse_xml(body: bytes) -> etree._Element:
-    parser = etree.XMLParser(no_network=True, load_dtd=False, resolve_entities=False)
-    try:
-        root = etree.fromstring(body, parser)
-    except (etree.XMLSyntaxError, ValueError) as exc:
-        raise TransportError(f"the AEAT answer is not XML: {exc}") from exc
-    if root.getroottree().docinfo.doctype:
-        raise TransportError("the AEAT answer contains a DOCTYPE; refused")
-    return root
-
-
 def _required(element: etree._Element, path: str) -> str:
     text = element.findtext(path, namespaces=_NS)
     if text is None:
@@ -136,13 +125,6 @@ def _required(element: etree._Element, path: str) -> str:
 def _optional_int(element: etree._Element, path: str) -> int | None:
     text = element.findtext(path, namespaces=_NS)
     return None if text is None else int(text)
-
-
-def _fault(fault: etree._Element) -> AeatFault:
-    faultcode = (fault.findtext("faultcode") or "unknown").strip()
-    message = " ".join((fault.findtext("faultstring") or "").split())
-    match = _FAULT_CODE.search(message)
-    return AeatFault(faultcode, message, int(match.group(1)) if match else None)
 
 
 def _duplicate(line: etree._Element) -> Duplicate | None:
@@ -174,10 +156,10 @@ def _record(line: etree._Element) -> RecordResult:
 
 def parse_response(body: bytes) -> SubmissionResult:
     """Parse an answer to ``RegFactuSistemaFacturacion``. Raises on faults and unusable bodies."""
-    root = _parse_xml(body)
-    fault = root.find(f"{{{NS_SOAP}}}Body/{{{NS_SOAP}}}Fault")
-    if fault is not None:
-        raise _fault(fault)
+    root = parse_xml(body)
+    soap_fault = root.find(f"{{{NS_SOAP}}}Body/{{{NS_SOAP}}}Fault")
+    if soap_fault is not None:
+        raise fault(soap_fault)
     response = root.find(f"{{{NS_SOAP}}}Body/{{{NS_R}}}RespuestaRegFactuSistemaFacturacion")
     if response is None:
         raise TransportError("unexpected AEAT answer: no RespuestaRegFactuSistemaFacturacion")
@@ -241,7 +223,8 @@ class AeatClient:
             headers={"Content-Type": "text/xml; charset=utf-8", "SOAPAction": '""'},
         )
 
-    def send(self, envelope: bytes) -> SubmissionResult:
+    def _post(self, envelope: bytes) -> bytes:
+        """POST one SOAP request; the body of an answer that carries SOAP, else an exception."""
         try:
             response = self._http.post(self.endpoint, content=envelope)
         except httpx.ConnectError as exc:
@@ -256,7 +239,16 @@ class AeatClient:
             )
         if response.status_code not in _HTTP_WITH_SOAP_BODY:
             raise TransportError(f"HTTP {response.status_code} from the AEAT")
-        return parse_response(response.content)
+        return response.content
+
+    def send(self, envelope: bytes) -> SubmissionResult:
+        """Register records: an envelope from :func:`huella.xml.envelope`."""
+        return parse_response(self._post(envelope))
+
+    def consulta(self, envelope: bytes) -> ConsultaResult:
+        """Ask which records the AEAT holds: an envelope from
+        :func:`huella.consulta.consulta_envelope`. Registers nothing."""
+        return parse_consulta(self._post(envelope))
 
     def close(self) -> None:
         self._http.close()

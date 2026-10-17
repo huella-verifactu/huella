@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic response written to RespuestaConsultaLR.xsd for tests; not recorded traffic. -->
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Header/>
+  <env:Body Id="Body">
+    <tikLRRC:RespuestaConsultaFactuSistemaFacturacion xmlns:tikLRRC="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaConsultaLR.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+      <tikLRRC:Cabecera>
+        <tik:IDVersion>1.0</tik:IDVersion>
+        <tik:ObligadoEmision>
+          <tik:NombreRazon>TIENDA EJEMPLO SL</tik:NombreRazon>
+          <tik:NIF>B12345674</tik:NIF>
+        </tik:ObligadoEmision>
+      </tikLRRC:Cabecera>
+      <tikLRRC:PeriodoImputacion>
+        <tikLRRC:Ejercicio>2026</tikLRRC:Ejercicio>
+        <tikLRRC:Periodo>01</tikLRRC:Periodo>
+      </tikLRRC:PeriodoImputacion>
+      <tikLRRC:IndicadorPaginacion>S</tikLRRC:IndicadorPaginacion>
+      <tikLRRC:ResultadoConsulta>ConDatos</tikLRRC:ResultadoConsulta>
+      <tikLRRC:RegistroRespuestaConsultaFactuSistemaFacturacion>
+        <tikLRRC:IDFactura>
+          <tik:IDEmisorFactura>B12345674</tik:IDEmisorFactura>
+          <tik:NumSerieFactura>2026-000123</tik:NumSerieFactura>
+          <tik:FechaExpedicionFactura>20-01-2026</tik:FechaExpedicionFactura>
+        </tikLRRC:IDFactura>
+        <tikLRRC:DatosRegistroFacturacion>
+          <tikLRRC:TipoFactura>F2</tikLRRC:TipoFactura>
+          <tikLRRC:CuotaTotal>17.36</tikLRRC:CuotaTotal>
+          <tikLRRC:ImporteTotal>100.00</tikLRRC:ImporteTotal>
+          <tikLRRC:FechaHoraHusoGenRegistro>2026-01-20T10:15:03+01:00</tikLRRC:FechaHoraHusoGenRegistro>
+          <tikLRRC:TipoHuella>01</tikLRRC:TipoHuella>
+          <tikLRRC:Huella>3C464DAF61ACB827C65FDA19F352A4E3BDC2C640E9E9FC4CC058073F38F12F60</tikLRRC:Huella>
+        </tikLRRC:DatosRegistroFacturacion>
+        <tikLRRC:EstadoRegistro>
+          <tikLRRC:TimestampUltimaModificacion>2026-01-20T10:15:05+01:00</tikLRRC:TimestampUltimaModificacion>
+          <tikLRRC:EstadoRegistro>Correcto</tikLRRC:EstadoRegistro>
+        </tikLRRC:EstadoRegistro>
+      </tikLRRC:RegistroRespuestaConsultaFactuSistemaFacturacion>
+      <tikLRRC:RegistroRespuestaConsultaFactuSistemaFacturacion>
+        <tikLRRC:IDFactura>
+          <tik:IDEmisorFactura>B12345674</tik:IDEmisorFactura>
+          <tik:NumSerieFactura>2026-000124</tik:NumSerieFactura>
+          <tik:FechaExpedicionFactura>21-01-2026</tik:FechaExpedicionFactura>
+        </tikLRRC:IDFactura>
+        <tikLRRC:DatosRegistroFacturacion>
+          <tikLRRC:Subsanacion>S</tikLRRC:Subsanacion>
+          <tikLRRC:TipoFactura>F1</tikLRRC:TipoFactura>
+          <tikLRRC:CuotaTotal>21.00</tikLRRC:CuotaTotal>
+          <tikLRRC:ImporteTotal>121.00</tikLRRC:ImporteTotal>
+          <tikLRRC:FechaHoraHusoGenRegistro>2026-01-21T09:00:00+01:00</tikLRRC:FechaHoraHusoGenRegistro>
+          <tikLRRC:TipoHuella>01</tikLRRC:TipoHuella>
+          <tikLRRC:Huella>AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12AB12</tikLRRC:Huella>
+        </tikLRRC:DatosRegistroFacturacion>
+        <tikLRRC:EstadoRegistro>
+          <tikLRRC:TimestampUltimaModificacion>2026-01-21T09:00:02+01:00</tikLRRC:TimestampUltimaModificacion>
+          <tikLRRC:EstadoRegistro>AceptadoConErrores</tikLRRC:EstadoRegistro>
+          <tikLRRC:CodigoErrorRegistro>2004</tikLRRC:CodigoErrorRegistro>
+          <tikLRRC:DescripcionErrorRegistro>Fecha fuera de margen</tikLRRC:DescripcionErrorRegistro>
+        </tikLRRC:EstadoRegistro>
+      </tikLRRC:RegistroRespuestaConsultaFactuSistemaFacturacion>
+      <tikLRRC:ClavePaginacion>
+        <tik:IDEmisorFactura>B12345674</tik:IDEmisorFactura>
+        <tik:NumSerieFactura>2026-000124</tik:NumSerieFactura>
+        <tik:FechaExpedicionFactura>21-01-2026</tik:FechaExpedicionFactura>
+      </tikLRRC:ClavePaginacion>
+    </tikLRRC:RespuestaConsultaFactuSistemaFacturacion>
+  </env:Body>
+</env:Envelope>

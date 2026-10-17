@@ -9,6 +9,13 @@ may change in any minor release.
 
 ### Added
 
+- The consulta service (`huella.consulta`): `consulta_envelope()` builds a
+  `ConsultaFactuSistemaFacturacion` request for one obligado and month (optionally one invoice,
+  or the next page), validated against `ConsultaLR.xsd`; `parse_consulta()` reads the answer:
+  each record the AEAT holds with its state, huella, timestamp and totals, and the next-page
+  key. `AeatClient.consulta()` sends it, and `huella consulta` (CLI) follows every page. A
+  consulta registers nothing, so it also checks a production connection safely.
+
 - AEAT spec drift check: `scripts/fetch_specs.py` downloads every official file listed in
   `specs/v1_0/SOURCES.md` and compares the schemas and WSDL byte for byte with the committed
   copies, and the reference documents with their recorded SHA-256 and `Last-Modified` date. Exit
