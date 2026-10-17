@@ -139,3 +139,35 @@ def test_the_client_posts_a_consulta_to_the_same_endpoint() -> None:
     endpoint = "https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP"
     assert str(seen[0].url) == endpoint
     assert seen[0].content == envelope
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "field"),
+    [
+        (b">S</tikLRRC:IndicadorPaginacion>", b">X</tikLRRC:IndicadorPaginacion>", "Paginacion"),
+        (b">ConDatos<", b">Quizas<", "ResultadoConsulta"),
+        (b">2026-000123</tik:NumSerieFactura>", b"></tik:NumSerieFactura>", "NumSerieFactura"),
+        (
+            b"<tikLRRC:TimestampUltimaModificacion>2026-01-20T10:15:05+01:00",
+            b"<tikLRRC:X>",
+            "Timestamp",
+        ),
+    ],
+)
+def test_values_outside_the_schema_are_not_guessed(old: bytes, new: bytes, field: str) -> None:
+    body = fixture("consulta_con_datos.xml").replace(old, new, 1)
+    if b"<tikLRRC:X>" in body:
+        body = body.replace(b"</tikLRRC:TimestampUltimaModificacion>", b"</tikLRRC:X>", 1)
+    with pytest.raises(TransportError, match=field):
+        parse_consulta(body)
+
+
+def test_the_last_change_of_each_record_is_kept() -> None:
+    first = parse_consulta(fixture("consulta_con_datos.xml")).records[0]
+    assert first.last_modified == "2026-01-20T10:15:05+01:00"
+
+
+def test_a_doctype_is_refused() -> None:
+    evil = b'<?xml version="1.0"?><!DOCTYPE x [<!ENTITY e SYSTEM "file:///etc/passwd">]><x>&e;</x>'
+    with pytest.raises(TransportError, match="DOCTYPE"):
+        parse_consulta(evil)

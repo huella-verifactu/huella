@@ -257,6 +257,7 @@ MAX_CONSULTA_PAGES = 50
 
 def _held_json(record: HeldRecord) -> dict[str, Any]:
     return {
+        "issuer_nif": record.issuer_nif,
         "number": record.number,
         "issue_date": record.issue_date.isoformat(),
         "state": record.state.value,
@@ -264,7 +265,9 @@ def _held_json(record: HeldRecord) -> dict[str, Any]:
         "generated_at": record.generated_at,
         "type": record.invoice_type,
         "total": record.total,
+        "tax_total": record.tax_total,
         "subsanacion": record.subsanacion,
+        "last_modified": record.last_modified,
         "error_code": record.error_code,
         "error_message": record.error_message,
     }
@@ -291,10 +294,19 @@ def _cmd_consulta(args: argparse.Namespace, transport: httpx.BaseTransport | Non
             )
             result = client.consulta(request)
             held.extend(result.records)
+            if result.next_page is not None and result.next_page == page:
+                raise UsageError("the AEAT returned the same page twice; stopping")
             page = result.next_page
             if page is None:
                 break
     _print_json({"records": [_held_json(r) for r in held], "complete": page is None})
+    if page is not None:
+        print(
+            f"warning: stopped after {MAX_CONSULTA_PAGES} pages; narrow the query "
+            "(--number, --date) to see the rest",
+            file=sys.stderr,
+        )
+        return EXIT_ERROR
     return EXIT_OK
 
 

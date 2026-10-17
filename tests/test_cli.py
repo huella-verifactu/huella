@@ -382,3 +382,45 @@ def test_consulta_rejects_a_bad_month(capsys: pytest.CaptureFixture[str], tmp_pa
     )  # fmt: skip
     assert code == 1
     assert "month" in err
+
+
+def test_consulta_of_one_invoice_and_a_repeated_page(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    cert_file, key_file = pem_files(tmp_path)
+    sent: list[bytes] = []
+
+    def same_page(request: httpx.Request) -> httpx.Response:
+        sent.append(request.content)
+        return httpx.Response(200, content=(RESPONSES / "consulta_con_datos.xml").read_bytes())
+
+    code, _, err = run(
+        capsys,
+        "consulta", "--cert", str(cert_file), "--key", str(key_file), "--nif", "B12345674",
+        "--name", "T", "--year", "2026", "--month", "1", "--number", "2026-000123",
+        "--date", "2026-01-20",
+        transport=httpx.MockTransport(same_page),
+    )  # fmt: skip
+    assert code == 1
+    assert "same page twice" in err
+    assert len(sent) == 2
+    assert b"2026-000123" in sent[0]
+    assert b"20-01-2026" in sent[0]
+
+
+def test_consulta_warns_when_it_stops_at_the_page_cap(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from huella import cli  # noqa: PLC0415
+
+    monkeypatch.setattr(cli, "MAX_CONSULTA_PAGES", 1)
+    cert_file, key_file = pem_files(tmp_path)
+    code, out, err = run(
+        capsys,
+        "consulta", "--cert", str(cert_file), "--key", str(key_file), "--nif", "B12345674",
+        "--name", "T", "--year", "2026", "--month", "1",
+        transport=answering("consulta_con_datos.xml"),
+    )  # fmt: skip
+    assert code == 1
+    assert json.loads(out)["complete"] is False
+    assert "stopped after 1 pages" in err

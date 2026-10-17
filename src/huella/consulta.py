@@ -37,7 +37,10 @@ class HeldState(StrEnum):
 
 @dataclass(frozen=True)
 class PageKey:
-    """``ClavePaginacion``: where the next page starts."""
+    """``ClavePaginacion``: the last invoice of a page; the next page starts after it.
+
+    Pass it back as ``page`` to :func:`consulta_envelope`.
+    """
 
     issuer_nif: str
     number: str
@@ -60,13 +63,20 @@ class HeldRecord:
     subsanacion: bool
     error_code: int | None
     error_message: str | None
+    last_modified: str  # TimestampUltimaModificacion: when the AEAT last changed its state
 
 
 @dataclass(frozen=True)
 class ConsultaResult:
-    found: bool  # ResultadoConsulta: ConDatos / SinDatos
+    """One page of an answer to :func:`consulta_envelope`.
+
+    ``found`` is false when the AEAT holds nothing for the filter (``SinDatos``). ``next_page``
+    is set when there is more (``IndicadorPaginacion = S``); ``raw`` is the answer as received.
+    """
+
+    found: bool
     records: tuple[HeldRecord, ...]
-    next_page: PageKey | None  # set when IndicadorPaginacion = S
+    next_page: PageKey | None
     raw: bytes
 
 
@@ -131,9 +141,17 @@ def _text(element: etree._Element, path: str) -> str | None:
 
 def _required(element: etree._Element, path: str) -> str:
     text = _text(element, path)
-    if text is None:
-        raise TransportError(f"unexpected consulta answer: {path} missing")
+    if not text:
+        raise TransportError(f"unexpected consulta answer: {path} missing or empty")
     return text
+
+
+def _one_of(element: etree._Element, path: str, allowed: tuple[str, ...]) -> str:
+    """A value the XSD restricts to a list: anything else is an answer we do not understand."""
+    value = _required(element, path)
+    if value not in allowed:
+        raise TransportError(f"unexpected consulta answer: {path} = {value!r}")
+    return value
 
 
 def _date(text: str) -> date:
@@ -156,11 +174,12 @@ def _record(item: etree._Element) -> HeldRecord:
         subsanacion=_text(item, data + "Subsanacion") == "S",
         error_code=None if code is None else int(code),
         error_message=_text(item, "rc:EstadoRegistro/rc:DescripcionErrorRegistro"),
+        last_modified=_required(item, "rc:EstadoRegistro/rc:TimestampUltimaModificacion"),
     )
 
 
 def _page(response: etree._Element) -> PageKey | None:
-    if _text(response, "rc:IndicadorPaginacion") != "S":
+    if _one_of(response, "rc:IndicadorPaginacion", ("S", "N")) == "N":
         return None
     return PageKey(
         issuer_nif=_required(response, "rc:ClavePaginacion/sf:IDEmisorFactura"),
@@ -185,7 +204,7 @@ def parse_consulta(body: bytes) -> ConsultaResult:
     try:
         items = response.iterfind("rc:RegistroRespuestaConsultaFactuSistemaFacturacion", _NS)
         return ConsultaResult(
-            found=_required(response, "rc:ResultadoConsulta") == "ConDatos",
+            found=_one_of(response, "rc:ResultadoConsulta", ("ConDatos", "SinDatos")) == "ConDatos",
             records=tuple(_record(item) for item in items),
             next_page=_page(response),
             raw=body,
